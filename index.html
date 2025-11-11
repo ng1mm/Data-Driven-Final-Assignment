@@ -5,28 +5,29 @@
 @using WebMatrix.Data
 
 @{
-
     var db = Database.Open("BoardGame");
-
 
     var searchTerm = Request.QueryString["search"];
     var selectedCategory = Request.QueryString["category"];
     var viewMode = Request.QueryString["viewMode"];
-
 
     if (string.IsNullOrEmpty(viewMode))
     {
         viewMode = "table";
     }
 
-
     var results = new List<dynamic>();
 
 
     if (!string.IsNullOrEmpty(searchTerm) && !string.IsNullOrEmpty(selectedCategory))
     {
-        results = db.Query(
-            "SELECT * FROM BoardGame WHERE Name LIKE @0 AND Family LIKE @1 ORDER BY Name",
+        results = db.Query(@"
+    SELECT bg.*
+    FROM BoardGame bg
+    JOIN GameCategory gc ON bg.BGGID = gc.BGGID
+    JOIN Category c ON gc.CategoryID = c.CategoryID
+    WHERE bg.Name LIKE @0 AND c.Category LIKE @1
+    ORDER BY bg.Name",
             "%" + searchTerm + "%", "%" + selectedCategory + "%"
         ).ToList();
     }
@@ -39,7 +40,6 @@
     }
     else if (!string.IsNullOrEmpty(selectedCategory))
     {
-
         results = db.Query(@"
     SELECT bg.*
     FROM BoardGame bg
@@ -61,7 +61,7 @@
         <h1 id="title" class="col-12 mb-4">Board Game Index</h1>
     </section>
 
-
+    <!-- Search & Filter Form -->
     <section class="row mb-4">
         <div class="col-12">
             <form method="get" class="form-inline">
@@ -88,7 +88,7 @@
         </div>
     </section>
 
-
+    <!-- View Mode Toggle -->
     <section class="row mb-4">
         <div class="col-12">
             <a href="?viewMode=table" class="btn btn-info @(viewMode == "table" ? "active" : "")">Table View</a>
@@ -96,7 +96,7 @@
         </div>
     </section>
 
-
+    <!-- Results Count -->
     <section class="row mb-3">
         <div class="col-12">
             <p>
@@ -108,7 +108,7 @@
         </div>
     </section>
 
-
+    <!-- Results Section -->
     <section class="row">
         @if (results.Count == 0)
         {
@@ -117,7 +117,7 @@
             </div>
         }
 
-
+        <!-- Table View -->
         @if (viewMode == "table" && results.Count > 0)
         {
             <div class="col-12">
