@@ -2,18 +2,24 @@
     ViewBag.Title = "Home Page";
 }
 
-
+<!-- Set up connection with the database-->
 @using WebMatrix.Data
 @{
     var db = Database.Open("BoardGame");
     var searchQueryString = "SELECT * FROM BoardGame ORDER BY Name";
 
-
+    // Check if a search query was provided
     var searchTerm = Request.QueryString["search"];
     if (!string.IsNullOrEmpty(searchTerm))
     {
-
+        // Add search functionality based on the search term
         searchQueryString = "SELECT * FROM BoardGame WHERE Name LIKE @0 ORDER BY Name";
+    }
+
+    var viewMode = Request.QueryString["viewMode"]; // Get view mode (table or card)
+    if (string.IsNullOrEmpty(viewMode))
+    {
+        viewMode = "table"; // Default view mode is table
     }
 }
 
@@ -23,7 +29,7 @@
         <p><a href="https://asp.net" class="btn btn-primary btn-md">Learn more &raquo;</a></p>
     </section>
 
-
+    <!-- Search bar -->
     <section class="row mb-4">
         <div class="col-12">
             <form method="get" class="form-inline">
@@ -36,62 +42,99 @@
         </div>
     </section>
 
+    <!-- View Mode Toggle -->
+    <section class="row mb-4">
+        <div class="col-12">
+            <a href="?viewMode=table" class="btn btn-info">Table View</a>
+            <a href="?viewMode=card" class="btn btn-info">Card View</a>
+        </div>
+    </section>
+
+    <!-- Board Games Section -->
     <section class="row">
         <h2 class="col-12">Board Games</h2>
 
+        <!-- Table of Board Games -->
+        @if (viewMode == "table")
+        {
+            <div class="col-12">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Description</th>
+                            <th>Year Published</th>
+                            <th>Min Players</th>
+                            <th>Max Players</th>
+                            <th>Age Recommendation</th>
+                            <th>Language Ease</th>
+                            <th>Best Players</th>
+                            <th>Num Owned</th>
+                            <th>Num Want</th>
+                            <th>Num Wish</th>
+                            <th>Mfg Playtime</th>
+                            <th>Min Playtime</th>
+                            <th>Max Playtime</th>
+                            <th>Age Rec</th>
+                            <th>Num Alternatives</th>
+                            <th>Num Expansions</th>
+                            <th>Family</th>
+                            <th>Image Path</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in db.Query(searchQueryString, "%" + searchTerm + "%"))
+                        {
+                            <tr>
+                                <td>@row.Name</td>
+                                <td>@row.Description</td>
+                                <td>@row.YearPublished</td>
+                                <td>@row.MinPlayers</td>
+                                <td>@row.MaxPlayers</td>
+                                <td>@row.ComAgeRec</td>
+                                <td>@row.LanguageEase</td>
+                                <td>@row.BestPlayers</td>
+                                <td>@row.NumOwned</td>
+                                <td>@row.NumWant</td>
+                                <td>@row.NumWish</td>
+                                <td>@row.MfgPlaytime</td>
+                                <td>@row.ComMinPlayTime</td>
+                                <td>@row.ComMaxPlayTime</td>
+                                <td>@row.MfgAgeRec</td>
+                                <td>@row.NumAlternates</td>
+                                <td>@row.NumExpansions</td>
+                                <td>@row.Family</td>
+                                <td><img src="@row.ImagePath" alt="@row.Name" class="img-fluid" width="50" /></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
 
-        <div class="col-12">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Description</th>
-                        <th>Year Published</th>
-                        <th>Min Players</th>
-                        <th>Max Players</th>
-                        <th>Age Recommendation</th>
-                        <th>Language Ease</th>
-                        <th>Best Players</th>
-                        <th>Num Owned</th>
-                        <th>Num Want</th>
-                        <th>Num Wish</th>
-                        <th>Mfg Playtime</th>
-                        <th>Min Playtime</th>
-                        <th>Max Playtime</th>
-                        <th>Age Rec</th>
-                        <th>Num Alternatives</th>
-                        <th>Num Expansions</th>
-                        <th>Family</th>
-                        <th>Image Path</th>
-                    </tr>
-                </thead>
-                <tbody>
+        <!-- Card View of Board Games -->
+        @if (viewMode == "card")
+        {
+            <div class="col-12">
+                <div class="row">
                     @foreach (var row in db.Query(searchQueryString, "%" + searchTerm + "%"))
                     {
-                        <tr>
-                            <td>@row.Name</td>
-                            <td>@row.Description</td>
-                            <td>@row.YearPublished</td>
-                            <td>@row.MinPlayers</td>
-                            <td>@row.MaxPlayers</td>
-                            <td>@row.ComAgeRec</td>
-                            <td>@row.LanguageEase</td>
-                            <td>@row.BestPlayers</td>
-                            <td>@row.NumOwned</td>
-                            <td>@row.NumWant</td>
-                            <td>@row.NumWish</td>
-                            <td>@row.MfgPlaytime</td>
-                            <td>@row.ComMinPlayTime</td>
-                            <td>@row.ComMaxPlayTime</td>
-                            <td>@row.MfgAgeRec</td>
-                            <td>@row.NumAlternates</td>
-                            <td>@row.NumExpansions</td>
-                            <td>@row.Family</td>
-                            <td><img src="@row.ImagePath" alt="@row.Name" class="img-fluid" width="50" /></td>
-                        </tr>
+                        <div class="col-md-4 mb-4">
+                            <div class="card">
+                                <img src="@row.ImagePath" class="card-img-top" alt="@row.Name" />
+                                <div class="card-body">
+                                    <h5 class="card-title">@row.Name</h5>
+                                    <p class="card-text">@row.Description</p>
+                                    <p class="card-text"><strong>Year Published:</strong> @row.YearPublished</p>
+                                    <p class="card-text"><strong>Players:</strong> @row.MinPlayers - @row.MaxPlayers</p>
+                                    <p class="card-text"><strong>Best For:</strong> @row.BestPlayers</p>
+                                    <a href="#" class="btn btn-primary">View More</a>
+                                </div>
+                            </div>
+                        </div>
                     }
-                </tbody>
-            </table>
-        </div>
+                </div>
+            </div>
+        }
     </section>
 </main>
