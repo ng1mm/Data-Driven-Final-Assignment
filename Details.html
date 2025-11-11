@@ -3,6 +3,9 @@
     var db = Database.Open("BoardGame");
     var gameId = Request.QueryString["id"];
     var game = db.QuerySingle("SELECT * FROM BoardGame WHERE BGGID = @0", gameId);
+
+    // 🆕 Step 2: Get average rating and review count for the selected game
+    var ratings = db.QuerySingle("SELECT COALESCE(AVG(Rating), 0) AS AverageRating, COUNT(*) AS ReviewCount FROM Reviews WHERE BGGID = @0", gameId);
 }
 
 @using WebMatrix.Data
@@ -19,7 +22,7 @@
                 <div class="card mb-4">
                     <div class="row g-0">
                         <div class="col-md-4">
-                            <img src="@(string.IsNullOrEmpty(game.ImagePath) ? "/images/noimage.png" : game.ImagePath)" 
+                            <img src="@(string.IsNullOrEmpty(game.ImagePath) ? "/images/noimage.png" : game.ImagePath)"
                                  class="img-fluid rounded-start" alt="@game.Name">
                         </div>
                         <div class="col-md-8">
@@ -30,6 +33,15 @@
                                 <p class="card-text"><strong>Players:</strong> @game.MinPlayers - @game.MaxPlayers</p>
                                 <p class="card-text"><strong>Best For:</strong> @game.BestPlayers</p>
                                 <p class="card-text"><strong>Family:</strong> @game.Family</p>
+
+                                <hr />
+                                <!-- 🆕 Step 2: Display average rating and review count -->
+                                <p class="card-text">
+                                    <strong>Average Rating:</strong> @String.Format("{0:F1}", ratings.AverageRating)
+                                </p>
+                                <p class="card-text">
+                                    <strong>Total Reviews:</strong> @ratings.ReviewCount
+                                </p>
                             </div>
                         </div>
                     </div>
