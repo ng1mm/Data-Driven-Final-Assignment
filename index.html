@@ -2,88 +2,141 @@
     ViewBag.Title = "Home Page";
 }
 
-<!-- Set up connection with the database-->
 @using WebMatrix.Data
+
 @{
+
     var db = Database.Open("BoardGame");
-    var searchQueryString = "SELECT * FROM BoardGame ORDER BY Name";
 
-    // Check if a search query was provided
+
     var searchTerm = Request.QueryString["search"];
-    if (!string.IsNullOrEmpty(searchTerm))
-    {
-        // Add search functionality based on the search term
-        searchQueryString = "SELECT * FROM BoardGame WHERE Name LIKE @0 ORDER BY Name";
-    }
+    var selectedCategory = Request.QueryString["category"];
+    var viewMode = Request.QueryString["viewMode"];
 
-    var viewMode = Request.QueryString["viewMode"]; // Get view mode (table or card)
+
     if (string.IsNullOrEmpty(viewMode))
     {
-        viewMode = "table"; // Default view mode is table
+        viewMode = "table";
+    }
+
+
+    var results = new List<dynamic>();
+
+
+    if (!string.IsNullOrEmpty(searchTerm) && !string.IsNullOrEmpty(selectedCategory))
+    {
+        results = db.Query(
+            "SELECT * FROM BoardGame WHERE Name LIKE @0 AND Family LIKE @1 ORDER BY Name",
+            "%" + searchTerm + "%", "%" + selectedCategory + "%"
+        ).ToList();
+    }
+    else if (!string.IsNullOrEmpty(searchTerm))
+    {
+        results = db.Query(
+            "SELECT * FROM BoardGame WHERE Name LIKE @0 ORDER BY Name",
+            "%" + searchTerm + "%"
+        ).ToList();
+    }
+    else if (!string.IsNullOrEmpty(selectedCategory))
+    {
+
+        results = db.Query(@"
+    SELECT bg.*
+    FROM BoardGame bg
+    JOIN GameCategory gc ON bg.BGGID = gc.BGGID
+    JOIN Category c ON gc.CategoryID = c.CategoryID
+    WHERE c.Category LIKE @0
+    ORDER BY bg.Name",
+            "%" + selectedCategory + "%"
+        ).ToList();
+    }
+    else
+    {
+        results = db.Query("SELECT * FROM BoardGame ORDER BY Name").ToList();
     }
 }
 
 <main class="container">
     <section class="row" aria-labelledby="aspnetTitle">
-        <h1 id="title" class="col-12">Index Page</h1>
-        <p><a href="https://asp.net" class="btn btn-primary btn-md">Learn more &raquo;</a></p>
+        <h1 id="title" class="col-12 mb-4">Board Game Index</h1>
     </section>
 
-    <!-- Search bar -->
+
     <section class="row mb-4">
         <div class="col-12">
             <form method="get" class="form-inline">
-                <div class="form-group">
+                <div class="form-group mb-2">
                     <label for="search" class="sr-only">Search by Name</label>
                     <input type="text" class="form-control" id="search" name="search" placeholder="Search for a Board Game" value="@searchTerm" />
                 </div>
-                <button type="submit" class="btn btn-secondary">Search</button>
+
+                <div class="form-group mx-sm-3 mb-2">
+                    <label for="category" class="sr-only">Filter by Category</label>
+                    <select id="category" name="category" class="form-control">
+                        <option value="">All Categories</option>
+                        @foreach (var category in db.Query("SELECT Category FROM Category ORDER BY Category"))
+                        {
+                            <option value="@category.Category" @(category.Category == selectedCategory ? "selected" : "")>
+                                @category.Category
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-secondary mb-2">Search</button>
             </form>
         </div>
     </section>
 
-    <!-- View Mode Toggle -->
+
     <section class="row mb-4">
         <div class="col-12">
-            <a href="?viewMode=table" class="btn btn-info">Table View</a>
-            <a href="?viewMode=card" class="btn btn-info">Card View</a>
+            <a href="?viewMode=table" class="btn btn-info @(viewMode == "table" ? "active" : "")">Table View</a>
+            <a href="?viewMode=card" class="btn btn-info @(viewMode == "card" ? "active" : "")">Card View</a>
         </div>
     </section>
 
-    <!-- Board Games Section -->
-    <section class="row">
-        <h2 class="col-12">Board Games</h2>
 
-        <!-- Table of Board Games -->
-        @if (viewMode == "table")
+    <section class="row mb-3">
+        <div class="col-12">
+            <p>
+                Showing
+                <strong>@(results.Count)</strong> game(s)
+                @(string.IsNullOrEmpty(searchTerm) ? "" : $"matching '{searchTerm}'")
+                @(string.IsNullOrEmpty(selectedCategory) ? "" : $" in '{selectedCategory}'")
+            </p>
+        </div>
+    </section>
+
+
+    <section class="row">
+        @if (results.Count == 0)
         {
             <div class="col-12">
-                <table class="table table-striped">
-                    <thead>
+                <div class="alert alert-warning">No board games found. Try another search term or category.</div>
+            </div>
+        }
+
+
+        @if (viewMode == "table" && results.Count > 0)
+        {
+            <div class="col-12">
+                <table class="table table-striped table-bordered">
+                    <thead class="thead-dark">
                         <tr>
                             <th>Name</th>
                             <th>Description</th>
                             <th>Year Published</th>
                             <th>Min Players</th>
                             <th>Max Players</th>
-                            <th>Age Recommendation</th>
-                            <th>Language Ease</th>
                             <th>Best Players</th>
-                            <th>Num Owned</th>
-                            <th>Num Want</th>
-                            <th>Num Wish</th>
-                            <th>Mfg Playtime</th>
-                            <th>Min Playtime</th>
-                            <th>Max Playtime</th>
-                            <th>Age Rec</th>
-                            <th>Num Alternatives</th>
-                            <th>Num Expansions</th>
                             <th>Family</th>
-                            <th>Image Path</th>
+                            <th>Image</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var row in db.Query(searchQueryString, "%" + searchTerm + "%"))
+                        @foreach (var row in results)
                         {
                             <tr>
                                 <td>@row.Name</td>
@@ -91,20 +144,14 @@
                                 <td>@row.YearPublished</td>
                                 <td>@row.MinPlayers</td>
                                 <td>@row.MaxPlayers</td>
-                                <td>@row.ComAgeRec</td>
-                                <td>@row.LanguageEase</td>
                                 <td>@row.BestPlayers</td>
-                                <td>@row.NumOwned</td>
-                                <td>@row.NumWant</td>
-                                <td>@row.NumWish</td>
-                                <td>@row.MfgPlaytime</td>
-                                <td>@row.ComMinPlayTime</td>
-                                <td>@row.ComMaxPlayTime</td>
-                                <td>@row.MfgAgeRec</td>
-                                <td>@row.NumAlternates</td>
-                                <td>@row.NumExpansions</td>
                                 <td>@row.Family</td>
-                                <td><img src="@row.ImagePath" alt="@row.Name" class="img-fluid" width="50" /></td>
+                                <td>
+                                    <img src="@(string.IsNullOrEmpty(row.ImagePath) ? "/images/noimage.png" : row.ImagePath)" alt="@row.Name" width="60" class="img-thumbnail" />
+                                </td>
+                                <td>
+                                    <a href="~/Home/Details?id=@row.BGGID" class="btn btn-primary btn-sm">View Details</a>
+                                </td>
                             </tr>
                         }
                     </tbody>
@@ -112,23 +159,25 @@
             </div>
         }
 
-        <!-- Card View of Board Games -->
-        @if (viewMode == "card")
+        <!-- Card View -->
+        @if (viewMode == "card" && results.Count > 0)
         {
             <div class="col-12">
                 <div class="row">
-                    @foreach (var row in db.Query(searchQueryString, "%" + searchTerm + "%"))
+                    @foreach (var row in results)
                     {
                         <div class="col-md-4 mb-4">
-                            <div class="card">
-                                <img src="@row.ImagePath" class="card-img-top" alt="@row.Name" />
+                            <div class="card h-100">
+                                <img src="@(string.IsNullOrEmpty(row.ImagePath) ? "/images/noimage.png" : row.ImagePath)" class="card-img-top" alt="@row.Name" />
                                 <div class="card-body">
                                     <h5 class="card-title">@row.Name</h5>
                                     <p class="card-text">@row.Description</p>
                                     <p class="card-text"><strong>Year Published:</strong> @row.YearPublished</p>
                                     <p class="card-text"><strong>Players:</strong> @row.MinPlayers - @row.MaxPlayers</p>
                                     <p class="card-text"><strong>Best For:</strong> @row.BestPlayers</p>
-                                    <a href="#" class="btn btn-primary">View More</a>
+                                </div>
+                                <div class="card-footer text-center">
+                                    <a href="~/Home/Details?id=@row.BGGID" class="btn btn-primary btn-sm">View Details</a>
                                 </div>
                             </div>
                         </div>
