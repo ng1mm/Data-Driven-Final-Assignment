@@ -1,0 +1,97 @@
+@{
+    ViewBag.Title = "Home Page";
+}
+
+
+@using WebMatrix.Data
+@{
+    var db = Database.Open("BoardGame");
+    var searchQueryString = "SELECT * FROM BoardGame ORDER BY Name";
+
+
+    var searchTerm = Request.QueryString["search"];
+    if (!string.IsNullOrEmpty(searchTerm))
+    {
+
+        searchQueryString = "SELECT * FROM BoardGame WHERE Name LIKE @0 ORDER BY Name";
+    }
+}
+
+<main class="container">
+    <section class="row" aria-labelledby="aspnetTitle">
+        <h1 id="title" class="col-12">Index Page</h1>
+        <p><a href="https://asp.net" class="btn btn-primary btn-md">Learn more &raquo;</a></p>
+    </section>
+
+
+    <section class="row mb-4">
+        <div class="col-12">
+            <form method="get" class="form-inline">
+                <div class="form-group">
+                    <label for="search" class="sr-only">Search by Name</label>
+                    <input type="text" class="form-control" id="search" name="search" placeholder="Search for a Board Game" value="@searchTerm" />
+                </div>
+                <button type="submit" class="btn btn-secondary">Search</button>
+            </form>
+        </div>
+    </section>
+
+    <section class="row">
+        <h2 class="col-12">Board Games</h2>
+
+
+        <div class="col-12">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Year Published</th>
+                        <th>Min Players</th>
+                        <th>Max Players</th>
+                        <th>Age Recommendation</th>
+                        <th>Language Ease</th>
+                        <th>Best Players</th>
+                        <th>Num Owned</th>
+                        <th>Num Want</th>
+                        <th>Num Wish</th>
+                        <th>Mfg Playtime</th>
+                        <th>Min Playtime</th>
+                        <th>Max Playtime</th>
+                        <th>Age Rec</th>
+                        <th>Num Alternatives</th>
+                        <th>Num Expansions</th>
+                        <th>Family</th>
+                        <th>Image Path</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in db.Query(searchQueryString, "%" + searchTerm + "%"))
+                    {
+                        <tr>
+                            <td>@row.Name</td>
+                            <td>@row.Description</td>
+                            <td>@row.YearPublished</td>
+                            <td>@row.MinPlayers</td>
+                            <td>@row.MaxPlayers</td>
+                            <td>@row.ComAgeRec</td>
+                            <td>@row.LanguageEase</td>
+                            <td>@row.BestPlayers</td>
+                            <td>@row.NumOwned</td>
+                            <td>@row.NumWant</td>
+                            <td>@row.NumWish</td>
+                            <td>@row.MfgPlaytime</td>
+                            <td>@row.ComMinPlayTime</td>
+                            <td>@row.ComMaxPlayTime</td>
+                            <td>@row.MfgAgeRec</td>
+                            <td>@row.NumAlternates</td>
+                            <td>@row.NumExpansions</td>
+                            <td>@row.Family</td>
+                            <td><img src="@row.ImagePath" alt="@row.Name" class="img-fluid" width="50" /></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
