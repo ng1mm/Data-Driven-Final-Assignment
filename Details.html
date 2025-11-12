@@ -3,18 +3,25 @@
     var db = Database.Open("BoardGame");
     var gameId = Request.QueryString["id"];
 
+    
     if (string.IsNullOrEmpty(gameId))
     {
-        <div class="alert alert-danger">Game ID is missing in the request.</div>
+        <div class="alert alert-danger">Game ID is missing in the request. Please provide a valid Game ID.</div>
+        <script>
+            setTimeout(function() {
+                window.location.href = '/Home/Index'; 
+            }, 3000); 
+        </script>
     }
 
     
     var game = db.QuerySingle("SELECT * FROM BoardGame WHERE BGGID = @0", gameId);
 
-   
+    
     var ratings = db.QuerySingle("SELECT COALESCE(AVG(Rating), 0) AS AverageRating, COUNT(*) AS ReviewCount FROM UserRating WHERE BGGID = @0", gameId);
 
-    var valuableReviews = db.Query("SELECT * FROM UserRating WHERE BGGID = @0 AND Rating > 7", gameId);
+    
+    var valuableReviews = db.Query("SELECT * FROM UserRating WHERE BGGID = @0 AND Rating > 7", gameId); 
 }
 
 @using WebMatrix.Data
@@ -45,6 +52,7 @@
 
                                 <hr />
 
+                                
                                 <p class="card-text">
                                     <strong>Average Rating:</strong> @String.Format("{0:F1}", ratings.AverageRating)
                                 </p>
@@ -52,12 +60,12 @@
                                     <strong>Total Reviews:</strong> @ratings.ReviewCount
                                 </p>
 
-
+                                
                                 <p class="card-text">
-                                    <strong>Valuable Reviews:</strong> @valuableReviews.Count()
+                                    <strong>Valuable Reviews (Rating > 7):</strong> @valuableReviews.Count()
                                 </p>
 
-
+                                
                                 <p class="card-text">
                                     <strong>Rating: </strong>
                                     @for (var i = 1; i <= 5; i++)
