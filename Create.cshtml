@@ -4,40 +4,11 @@
     ViewBag.Title = "Add a New Board Game";
     var db = Database.Open("BoardGame");
 
-    
+    // Load existing families, categories, and themes
     var categories = db.Query("SELECT * FROM GameCategory");
     var families = db.Query("SELECT * FROM GameFamily");
-
-    
-    if (IsPost)
-    {
-        var gameName = Request["gameName"];
-        var gameDescription = Request["gameDescription"];
-        var yearPublished = Request["yearPublished"];
-        var minPlayers = Request["minPlayers"];
-        var maxPlayers = Request["maxPlayers"];
-        var gameFamily = Request["gameFamily"];
-
-        try
-        {
-            
-            var nextId = db.QueryValue("SELECT ISNULL(MAX(BGGId), 0) + 1 FROM BoardGame");
-
-            
-            var sql = @"INSERT INTO BoardGame
-                (BGGId, Name, Description, YearPublished, MinPlayers, MaxPlayers, Family)
-                VALUES (@0, @1, @2, @3, @4, @5, @6)";
-            db.Execute(sql, nextId, gameName, gameDescription, yearPublished, minPlayers, maxPlayers, gameFamily);
-
-            TempData["SuccessMessage"] = "Board game added successfully!";
-        }
-        catch (Exception ex)
-        {
-            TempData["ErrorMessage"] = "Error adding board game: " + ex.Message;
-        }
-    }
+    var themes = db.Query("SELECT * FROM Theme");
 }
-
 
 <main class="container">
     <section class="row">
@@ -54,17 +25,15 @@
                 <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
             }
 
-            <form method="post" action="/Home/Create" enctype="multipart/form-data">
+            <form method="post" action="/Home/Create">
                 <div class="mb-3">
                     <label for="gameName" class="form-label">Game Name</label>
-                    <input type="text" class="form-control" id="gameName" name="gameName" required aria-describedby="gameNameHelp">
-                    <small id="gameNameHelp" class="form-text text-muted">Enter the name of the board game.</small>
+                    <input type="text" class="form-control" id="gameName" name="gameName" required>
                 </div>
 
                 <div class="mb-3">
                     <label for="gameDescription" class="form-label">Game Description</label>
-                    <textarea class="form-control" id="gameDescription" name="gameDescription" rows="3" required aria-describedby="gameDescriptionHelp"></textarea>
-                    <small id="gameDescriptionHelp" class="form-text text-muted">Provide a short description of the game.</small>
+                    <textarea class="form-control" id="gameDescription" name="gameDescription" rows="3" required></textarea>
                 </div>
 
                 <div class="mb-3">
@@ -104,57 +73,42 @@
                     </select>
                 </div>
 
-                <button type="submit" class="btn btn-primary" id="submitBtn">Add Game</button>
+                <div class="mb-3">
+                    <label for="gameTheme" class="form-label">Game Theme</label>
+                    <select class="form-select" id="gameTheme" name="gameTheme">
+                        <option value="">Select an Existing Theme</option>
+                        @foreach (var theme in themes)
+                        {
+                            <option value="@theme.ThemeID">@theme.ThemeName</option>
+                        }
+                    </select>
+                    <small class="form-text text-muted">Or type a new theme below:</small>
+                    <input type="text" class="form-control mt-1" id="newTheme" name="newTheme" placeholder="Enter new theme if not listed">
+                </div>
+
+                <button type="submit" class="btn btn-primary">Add Game</button>
             </form>
         </div>
     </section>
 </main>
 
-
 <style>
-    .container {
-        max-width: 800px;
-    }
-
-    .form-label {
-        font-weight: bold;
-    }
-
-    .form-text {
-        font-style: italic;
-    }
-
-    .btn-primary {
-        background-color: #5cb85c;
-        border: none;
-    }
-
-        .btn-primary:hover {
-            background-color: #4cae4c;
-        }
-
-    .alert {
-        margin-top: 20px;
-    }
-
-    .form-select, .form-control {
-        border-radius: 0.375rem;
-        box-shadow: 0 0 5px rgba(0,0,0,0.1);
-    }
-
-        .form-control:focus, .form-select:focus {
-            box-shadow: 0 0 5px rgba(96, 165, 255, 0.5);
-            border-color: #60a5fa;
-        }
+    .container { max-width: 800px; }
+    .form-label { font-weight: bold; }
+    .form-text { font-style: italic; }
+    .btn-primary { background-color: #5cb85c; border: none; }
+    .btn-primary:hover { background-color: #4cae4c; }
+    .alert { margin-top: 20px; }
+    .form-select, .form-control { border-radius: 0.375rem; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
+    .form-control:focus, .form-select:focus { box-shadow: 0 0 5px rgba(96, 165, 255, 0.5); border-color: #60a5fa; }
 </style>
 
 <script>
-
-    document.querySelector('form').addEventListener('submit', function (e) {
+    document.querySelector('form').addEventListener('submit', function(e) {
         var gameName = document.getElementById('gameName').value;
         var gameDescription = document.getElementById('gameDescription').value;
         if (!gameName || !gameDescription) {
-            e.preventDefault(); 
+            e.preventDefault();
             alert("Please fill in all required fields.");
         }
     });
