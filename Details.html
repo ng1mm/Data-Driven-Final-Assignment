@@ -4,8 +4,8 @@
     var gameId = Request.QueryString["id"];
     var game = db.QuerySingle("SELECT * FROM BoardGame WHERE BGGID = @0", gameId);
 
-    // 🆕 Step 2: Get average rating and review count for the selected game
-    var ratings = db.QuerySingle("SELECT COALESCE(AVG(Rating), 0) AS AverageRating, COUNT(*) AS ReviewCount FROM Reviews WHERE BGGID = @0", gameId);
+ 
+    var ratings = db.QuerySingle("SELECT COALESCE(AVG(Rating), 0) AS AverageRating, COUNT(*) AS ReviewCount FROM UserRating WHERE BGGID = @0", gameId);
 }
 
 @using WebMatrix.Data
@@ -35,7 +35,7 @@
                                 <p class="card-text"><strong>Family:</strong> @game.Family</p>
 
                                 <hr />
-                                <!-- 🆕 Step 2: Display average rating and review count -->
+
                                 <p class="card-text">
                                     <strong>Average Rating:</strong> @String.Format("{0:F1}", ratings.AverageRating)
                                 </p>
