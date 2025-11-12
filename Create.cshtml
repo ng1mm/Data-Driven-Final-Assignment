@@ -1,0 +1,66 @@
+@using WebMatrix.Data
+
+@{
+    ViewBag.Title = "Add a New Board Game";
+    var db = Database.Open("BoardGame");
+    var categories = db.Query("SELECT * FROM GameCategory"); 
+    var families = db.Query("SELECT * FROM GameFamily"); 
+
+<main class="container">
+    <section class="row">
+        <div class="col-12">
+            <h3 class="my-4">Add a New Board Game</h3>
+
+            <form method="post" action="/Home/Create" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label for="gameName" class="form-label">Game Name</label>
+                    <input type="text" class="form-control" id="gameName" name="gameName" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="gameDescription" class="form-label">Game Description</label>
+                    <textarea class="form-control" id="gameDescription" name="gameDescription" rows="3" required></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label for="yearPublished" class="form-label">Year Published</label>
+                    <input type="number" class="form-control" id="yearPublished" name="yearPublished" min="1900" max="2099" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="minPlayers" class="form-label">Minimum Players</label>
+                    <input type="number" class="form-control" id="minPlayers" name="minPlayers" min="1" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="maxPlayers" class="form-label">Maximum Players</label>
+                    <input type="number" class="form-control" id="maxPlayers" name="maxPlayers" min="1" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="gameFamily" class="form-label">Game Family</label>
+                    <select class="form-select" id="gameFamily" name="gameFamily">
+                        <option value="">Select a Family</option>
+                        @foreach (var family in families)
+                        {
+                            <option value="@family.Family">@family.Family</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="gameCategory" class="form-label">Game Category</label>
+                    <select class="form-select" id="gameCategory" name="gameCategory">
+                        <option value="">Select a Category</option>
+                        @foreach (var category in categories)
+                        {
+                            <option value="@category.Category">@category.Category</option>
+                        }
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Add Game</button>
+            </form>
+        </div>
+    </section>
+</main>
