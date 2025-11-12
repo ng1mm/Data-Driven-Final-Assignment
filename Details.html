@@ -2,10 +2,19 @@
     ViewBag.Title = "Board Game Details";
     var db = Database.Open("BoardGame");
     var gameId = Request.QueryString["id"];
+
+    if (string.IsNullOrEmpty(gameId))
+    {
+        <div class="alert alert-danger">Game ID is missing in the request.</div>
+    }
+
+    
     var game = db.QuerySingle("SELECT * FROM BoardGame WHERE BGGID = @0", gameId);
 
- 
+   
     var ratings = db.QuerySingle("SELECT COALESCE(AVG(Rating), 0) AS AverageRating, COUNT(*) AS ReviewCount FROM UserRating WHERE BGGID = @0", gameId);
+
+    var valuableReviews = db.Query("SELECT * FROM UserRating WHERE BGGID = @0 AND Rating > 7", gameId);
 }
 
 @using WebMatrix.Data
@@ -23,7 +32,7 @@
                     <div class="row g-0">
                         <div class="col-md-4">
                             <img src="@(string.IsNullOrEmpty(game.ImagePath) ? "/images/noimage.png" : game.ImagePath)"
-                                 class="img-fluid rounded-start" alt="@game.Name">
+                                 class="img-fluid rounded-start" alt="@game.Name" loading="lazy">
                         </div>
                         <div class="col-md-8">
                             <div class="card-body">
@@ -32,7 +41,7 @@
                                 <p class="card-text"><strong>Year Published:</strong> @game.YearPublished</p>
                                 <p class="card-text"><strong>Players:</strong> @game.MinPlayers - @game.MaxPlayers</p>
                                 <p class="card-text"><strong>Best For:</strong> @game.BestPlayers</p>
-                                <p class="card-text"><strong>Family:</strong> @game.Family</p>
+                                <p class="card-text"><strong>Family:</strong> @(string.IsNullOrEmpty(game.Family) ? "N/A" : game.Family)</p>
 
                                 <hr />
 
@@ -42,6 +51,27 @@
                                 <p class="card-text">
                                     <strong>Total Reviews:</strong> @ratings.ReviewCount
                                 </p>
+
+
+                                <p class="card-text">
+                                    <strong>Valuable Reviews:</strong> @valuableReviews.Count()
+                                </p>
+
+
+                                <p class="card-text">
+                                    <strong>Rating: </strong>
+                                    @for (var i = 1; i <= 5; i++)
+                                    {
+                                        if (ratings.AverageRating >= i)
+                                        {
+                                            <span class="bi-star-fill text-warning"></span>
+                                        }
+                                        else
+                                        {
+                                            <span class="bi-star text-warning"></span>
+                                        }
+                                    }
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -50,3 +80,36 @@
         </div>
     </section>
 </main>
+
+
+<style>
+    .card {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+        .card:hover {
+            transform: scale(1.03);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        }
+
+    .card-body {
+        padding: 20px;
+    }
+
+    .card-title {
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+
+    .card-text {
+        margin-bottom: 10px;
+    }
+
+    .bi-star, .bi-star-fill {
+        font-size: 1.2rem;
+    }
+</style>
+
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
